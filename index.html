@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中学受験 併願パターン提案ツール</title>
+<title>中学受験 併願パターン提案ツール v1.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -320,7 +320,7 @@ select:focus {
 }
 .cal-exam {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 10px 8px;
   border-radius: 8px;
@@ -339,6 +339,7 @@ select:focus {
 }
 .cal-info {
   flex: 1;
+  min-width: 0;
 }
 .cal-school {
   font-size: 0.92rem;
@@ -369,6 +370,7 @@ a.cal-exam-link:hover {
   padding: 2px 8px;
   border-radius: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* カテゴリ色 */
@@ -380,6 +382,36 @@ a.cal-exam-link:hover {
 
 .cat-safe .cal-exam { background: #eefaf0; }
 .cat-safe .cal-badge { background: #cff2d6; color: #1e8449; }
+
+/* === 学校カード ボタンエリア === */
+.cal-buttons {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.cal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.cal-btn:hover {
+  opacity: 0.75;
+}
+.cal-btn-info {
+  background: #f0f0f0;
+  color: #555;
+}
+.cal-btn-route {
+  background: #f0f0f0;
+  color: #555;
+}
 
 /* === Warning === */
 .warnings {
@@ -492,6 +524,17 @@ a.cal-exam-link:hover {
   color: #888;
   margin-top: 1px;
 }
+/* v1.1: 終了時刻の注釈 */
+.cal-endtime-note {
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fff3cd;
+  color: #856404;
+  margin-left: 4px;
+}
+
 .cal-subjects-badge {
   font-size: 0.65rem;
   font-weight: 500;
@@ -859,6 +902,169 @@ a.cal-exam-link:hover {
 
 <!-- データとロジック（統合版） -->
 <script>
+
+// === v1.1: 試験時刻マスターデータ ===
+// 各学校の試験開始時刻・終了時刻（推定値含む）
+// end_time: 午前入試の終了時刻（分単位: 例 12*60+30 = 750）
+// start_time: 午後入試の開始時刻
+// ※ 個別データがない場合のデフォルト値:
+//   午前入試: 開始8:30 → 終了12:30（4科）/ 11:30（2科）
+//   午後入試: 開始14:30 → 終了16:30
+const EXAM_TIME_DEFAULTS = {
+  am_4科_end: 12 * 60 + 30,   // 12:30（午前4科の標準終了時刻）
+  am_2科_end: 11 * 60 + 30,  // 11:30（午前2科の標準終了時刻）
+  pm_start: 14 * 60 + 30,    // 14:30（午後入試の標準開始時刻）
+  pm_end: 16 * 60 + 30,      // 16:30（午後入試の標準終了時刻）
+  am_start: 8 * 60 + 30,     // 8:30（午前入試の標準開始時刻）
+  min_transfer_time: 60,     // 座標不明時のフォールバック移動時間（60分）
+};
+
+// 特定校の試験時刻オーバーライド（school_id → 時刻情報）
+// ※ 午前入試で終了時刻が特に遅い学校（午後受験が困難な学校）を登録
+// ★ 調査情報源:
+//   - 開成: NSさん確認済（社会14:00終了→退場14:30頃）
+//   - 桜蔭: 公式HP（9時開始、4科160分+面接。受験番号1-200→14:20終了、201-400→15:20終了）
+//   - 筑駒: 公式募集要項（4科各40分=160分、集合8:30頃、詳細は当日配布）
+//   - 武蔵: 公式HP（8:30-12:45 国50/算50/社40/理40）
+//   - 雙葉: 公式HP（集合8:15、午前筆記+午後面接、12:45-14:55終了）
+//   - 女子学院: 公式募集要項（8:30開始、4科各40分、11:10頃終了）
+//   - 麻布: 公式HP（8:30集合-14:30終了、国60/算60/社50/理50+昼休憩）
+//   - 駒場東邦: 公式HP（8:00-12:35、国60/算60/理40/社40）
+//   - 栄光学園: 公式HP（8:30-12:40、国50/社40/理40/算60）
+//   - 慶應普通部: 公式HP（8:10集合、午前筆記+午後面接+体育実技、16:00頃終了）
+//   - 浅野: 公式HP（8:00入室-12:40、国50/算50/社40/理40）
+//   - 早稲田: 公式HP（予鈴8:40→12:30終了、国50/算50/社30/理30）
+//   - フェリス: 公式HP（国50/算50/社30/理30、詳細時刻は募集要項参照）
+const EXAM_TIME_OVERRIDES = {
+  // === 終了時刻が非常に遅い学校（午後受験不可） ===
+  105: { am_end: 14 * 60 + 30, note: "開成: 4科、社会14:00終了→退場14:30頃" },
+  62:  { am_end: 14 * 60 + 20, note: "桜蔭: 9時開始、4科+面接、受験番号1-200→14:20終了" },
+  17:  { am_end: 14 * 60 + 30, note: "麻布: 8:30集合、国60/算60/社50/理50+昼休憩、14:30終了" },
+  194: { am_end: 16 * 60 + 0,  note: "慶應普通部: 午前筆記+午後面接+体育実技、16:00頃終了" },
+
+  // === 終了時刻が遅い学校（午後受験が非常に厳しい） ===
+  651: { am_end: 14 * 60 + 55, note: "雙葉: 集合8:15、午前筆記+午後面接、12:45-14:55終了" },
+  453: { am_end: 13 * 60 + 0,  note: "筑駒: 4科各40分、集合8:30頃、13:00頃終了（推定）" },
+
+  // === 12:30〜13:00に終了する学校（午後受験はタイト） ===
+  691: { am_end: 12 * 60 + 45, note: "武蔵: 8:30-12:45、国50/算50/社40/理40" },
+  52:  { am_end: 12 * 60 + 40, note: "栄光学園: 8:30-12:40、国50/社40/理40/算60" },
+  242: { am_end: 12 * 60 + 35, note: "駒場東邦: 8:00-12:35、国60/算60/理40/社40" },
+  16:  { am_end: 12 * 60 + 40, note: "浅野: 8:00入室、8:40-12:40、国50/算50/社40/理40" },
+  895: { am_end: 12 * 60 + 30, note: "早稲田: 予鈴8:40→12:30終了、国50/算50/社30/理30" },
+
+  // === 11:00〜11:30に終了する学校（午後受験に余裕あり） ===
+  342: { am_end: 11 * 60 + 10, note: "女子学院: 8:30開始、4科各40分、11:10終了" },
+
+  // === 標準的だが科目時間が長い学校 ===
+  919: { am_end: 12 * 60 + 30, note: "早大高等学院中学部: 4科（国50/算50/社40/理40）12:30頃終了（推定）" },
+  628: { am_end: 12 * 60 + 20, note: "フェリス女学院: 4科（国50/算50/社30/理30）12:20頃終了（推定）" },
+  741: { am_end: 12 * 60 + 35, note: "横浜雙葉: 8:20集合、4科（国50/算50/社40/理40）12:35終了、面接なし" },
+
+  // === 午後入試の開始時刻が早い/遅い学校 ===
+  // （必要に応じて pm_start を追加）
+};
+
+/**
+ * v1.1: 特定の入試について、午前の終了時刻（分単位）を返す
+ * @param {Object} exam - フラット化された入試オブジェクト
+ * @returns {number} 終了時刻（分単位、例: 12:30 → 750）
+ */
+function getExamEndTime(exam) {
+  // 1. 特定校オーバーライドがあればそちらを使う
+  if (EXAM_TIME_OVERRIDES[exam.school_id] && EXAM_TIME_OVERRIDES[exam.school_id].am_end) {
+    return EXAM_TIME_OVERRIDES[exam.school_id].am_end;
+  }
+  // 2. 午後入試の場合
+  if (exam.am_pm === "午後") {
+    return EXAM_TIME_DEFAULTS.pm_end;
+  }
+  // 3. 午前入試のデフォルト: 科目数で判定
+  if (exam.exam_subjects === "2科" || exam.exam_subjects === "1科") {
+    return EXAM_TIME_DEFAULTS.am_2科_end;
+  }
+  return EXAM_TIME_DEFAULTS.am_4科_end;
+}
+
+/**
+ * v1.1: 特定の午後入試について、開始時刻（分単位）を返す
+ * @param {Object} exam - フラット化された入試オブジェクト（午後）
+ * @returns {number} 開始時刻（分単位、例: 14:30 → 870）
+ */
+function getPMStartTime(exam) {
+  if (EXAM_TIME_OVERRIDES[exam.school_id] && EXAM_TIME_OVERRIDES[exam.school_id].pm_start) {
+    return EXAM_TIME_OVERRIDES[exam.school_id].pm_start;
+  }
+  return EXAM_TIME_DEFAULTS.pm_start;
+}
+
+/**
+ * v1.1: 午前校→午後校の学校間推定移動時間（分）を算出
+ * 最寄り駅の座標から直線距離ベースで推定。座標不明の場合はデフォルト値を返す。
+ * @param {Object} amExam - 午前の入試オブジェクト
+ * @param {Object} pmExam - 午後の入試オブジェクト
+ * @returns {number} 推定移動時間（分）
+ */
+function estimateSchoolToSchoolMinutes(amExam, pmExam) {
+  const amCoords = findStationCoords(amExam.nearest_station) || estimateCoordsFromAddress(amExam.address);
+  const pmCoords = findStationCoords(pmExam.nearest_station) || estimateCoordsFromAddress(pmExam.address);
+  if (!amCoords || !pmCoords) {
+    // 座標が取れない場合はデフォルトの最低移動時間を返す
+    return EXAM_TIME_DEFAULTS.min_transfer_time;
+  }
+  // 学校間の推定移動時間（自宅→学校と同じ計算式を流用）
+  // 直線距離 × 1.2（路線迂回係数）÷ 実効速度(40km/h) × 60 + 15（退場・徒歩・乗換）
+  const dist = haversineDistance(amCoords.lat, amCoords.lng, pmCoords.lat, pmCoords.lng);
+  if (dist < 1) return 15; // 1km以内は近隣（退場+徒歩のみ）
+  const travelMinutes = Math.round(dist * 1.2 / 40 * 60 + 15);
+  // 最低でも20分は確保（同じ駅でも退場・移動の時間）
+  return Math.max(travelMinutes, 20);
+}
+
+/**
+ * v1.1: 午前校→午後校の移動が時間的に可能かチェック
+ * 学校間の推定移動時間と、午前終了〜午後開始の余裕時間を比較して判定。
+ * @param {Object} amExam - 午前の入試
+ * @param {Object} pmExam - 午後の入試
+ * @returns {Object} { feasible: boolean, margin: number (分), transferTime: number (分), warning: string|null }
+ */
+function checkTransferFeasibility(amExam, pmExam) {
+  const amEnd = getExamEndTime(amExam);
+  const pmStart = getPMStartTime(pmExam);
+  const margin = pmStart - amEnd;
+  const transferTime = estimateSchoolToSchoolMinutes(amExam, pmExam);
+
+  if (margin < 0) {
+    // 午前が午後開始時刻より後に終わる → 物理的に不可能
+    return {
+      feasible: false,
+      margin: margin,
+      transferTime: transferTime,
+      warning: `${amExam.school_name}の終了時刻が遅いため、午後入試に間に合いません`
+    };
+  }
+  if (margin < transferTime) {
+    // 推定移動時間が足りない
+    return {
+      feasible: false,
+      margin: margin,
+      transferTime: transferTime,
+      warning: `${amExam.school_name}→${pmExam.school_name}：余裕${margin}分に対し推定移動時間${transferTime}分のため、移動が困難です`
+    };
+  }
+  if (margin < transferTime + 20) {
+    // 推定移動時間ギリギリ（20分未満の余裕）
+    return {
+      feasible: true,
+      margin: margin,
+      transferTime: transferTime,
+      warning: `${amExam.school_name}→${pmExam.school_name}：推定移動時間${transferTime}分に対し余裕${margin}分で、やや余裕がありません`
+    };
+  }
+  return { feasible: true, margin: margin, transferTime: transferTime, warning: null };
+}
+
+
 // === 学校データ ===
 // 学校マスターデータ（自動生成 - 編集しないこと）
 const SCHOOLS_DATA = {"schools":[{school_id:453,school_name:"筑波大附属駒場",school_type:"国立",gender_type:"男子校",address:"東京都 世田谷区",area:"東京23区",university_affiliated:false,exams:[{exam_name:"筑波大附属駒場",exam_date:"2/3",am_pm:"午前",gender:"男子",deviation_80:74,deviation_50:null,shutoken_80:78,nichinoken_r4:null}],nearest_station:"駒場東大前駅",onetes_code:"1803",nichinoken_code:"911"},
@@ -3002,7 +3208,8 @@ function flattenExams(filteredSchools, userInput, skipDevFilter) {
 
       const category = categorizeExam(examDev, effectiveDeviation);
 
-      exams.push({
+      // v1.1: 時刻情報を付与
+      const examObj = {
         school_id: school.school_id,
         school_name: school.school_name,
         area: school.area,
@@ -3022,7 +3229,8 @@ function flattenExams(filteredSchools, userInput, skipDevFilter) {
         gender_type: school.gender_type,
         nichinoken_r4: exam.nichinoken_r4 || null,
         nichinoken_code: school.nichinoken_code || null,
-      });
+      };
+      exams.push(examObj);
     }
   }
 
@@ -3064,12 +3272,46 @@ function sortByDate(a, b) {
 }
 
 /**
- * 日程の衝突チェック: 同じ日の同じ時間帯に2校以上入っていないか
+ * v1.1: 日程の衝突チェック（強化版）
+ * - 同じ日の同じ時間帯に2校以上入っていないか
+ * - 1日最大2校（午前1＋午後1）ルール
+ * - 午前校の終了時刻が遅い場合、午後校を追加不可
  */
 function hasConflict(pattern, newExam) {
-  return pattern.some(
-    e => e.exam_date === newExam.exam_date && e.am_pm === newExam.am_pm
-  );
+  // (1) 同じ日・同じ時間帯の重複チェック（従来通り）
+  if (pattern.some(e => e.exam_date === newExam.exam_date && e.am_pm === newExam.am_pm)) {
+    return true;
+  }
+
+  // (2) 1日最大2校チェック: 同じ日に既に2校以上ある場合はブロック
+  const sameDayExams = pattern.filter(e => e.exam_date === newExam.exam_date);
+  if (sameDayExams.length >= 2) {
+    return true;
+  }
+
+  // (3) 午後校を追加しようとしている場合: 午前校の終了時刻チェック
+  if (newExam.am_pm === "午後") {
+    const amExam = pattern.find(e => e.exam_date === newExam.exam_date && e.am_pm === "午前");
+    if (amExam) {
+      const result = checkTransferFeasibility(amExam, newExam);
+      if (!result.feasible) {
+        return true; // 移動が不可能 → 衝突扱い
+      }
+    }
+  }
+
+  // (4) 午前校を追加しようとしている場合: 既存の午後校との整合性チェック
+  if (newExam.am_pm === "午前") {
+    const pmExam = pattern.find(e => e.exam_date === newExam.exam_date && e.am_pm === "午後");
+    if (pmExam) {
+      const result = checkTransferFeasibility(newExam, pmExam);
+      if (!result.feasible) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -3246,7 +3488,7 @@ function subjectAdvantage(exam) {
 }
 
 /**
- * 2/1午後の候補を選ぶ
+ * v1.1: 2/1午後の候補を選ぶ（終了時刻・移動時間チェック付き）
  */
 function selectFeb1PM(allExams, userInput, feb1amSchool, avoidSchoolIds) {
   const avoid = avoidSchoolIds || [];
@@ -3254,16 +3496,28 @@ function selectFeb1PM(allExams, userInput, feb1amSchool, avoidSchoolIds) {
     .filter(e => e.exam_date === "2/1" && e.am_pm === "午後")
     .filter(e => e.category === "安全" || e.category === "相応")
     .filter(e => e.school_id !== (feb1amSchool ? feb1amSchool.school_id : null))
+    // v1.1: 午前校の終了時刻から午後校への移動が可能か確認
+    .filter(e => {
+      if (!feb1amSchool) return true;
+      const result = checkTransferFeasibility(feb1amSchool, e);
+      return result.feasible;
+    })
     .sort((a, b) => {
       // 避けるリストにある学校を後回し
       const avoidA = avoid.includes(a.school_id) ? 1 : 0;
       const avoidB = avoid.includes(b.school_id) ? 1 : 0;
       if (avoidA !== avoidB) return avoidA - avoidB;
+      // v1.1: 移動の余裕が大きい方を優先
+      if (feb1amSchool) {
+        const marginA = checkTransferFeasibility(feb1amSchool, a).margin;
+        const marginB = checkTransferFeasibility(feb1amSchool, b).margin;
+        if (Math.abs(marginA - marginB) > 30) return marginB - marginA;
+      }
       // 午前校と同エリアを優先
       const areaA = feb1amSchool && a.area === feb1amSchool.area ? -1 : 0;
       const areaB = feb1amSchool && b.area === feb1amSchool.area ? -1 : 0;
       if (areaA !== areaB) return areaA - areaB;
-      // 持ち偏差値が高い方を優先（=学校全体のレベルが高い方を優先）
+      // 持ち偏差値が高い方を優先
       return (b.school_base_deviation || b.deviation_80) - (a.school_base_deviation || a.deviation_80);
     });
 
@@ -3537,14 +3791,36 @@ function buildPattern(allExams, janAllExams, userInput, feb1amExam, options, var
     }
   }
 
-  // 2/1午後（マスト校で既に2/1午後が埋まっていなければ）
+  // v1.1: 2/1午後（マスト校で既に2/1午後が埋まっていなければ）
+  // 午前校の終了時刻が遅い場合は午後校を追加しない
   const has21PM = pattern.some(e => e.exam_date === "2/1" && e.am_pm === "午後");
   if (!has21PM) {
     const actualFeb1am = pattern.find(e => e.exam_date === "2/1" && e.am_pm === "午前");
-    const avoid = avoidSchoolIds || [];
-    const feb1pm = selectFeb1PM(allExams, userInput, actualFeb1am, avoid);
-    if (feb1pm && !pattern.some(p => p.school_id === feb1pm.school_id && p.exam_date === "2/1" && p.am_pm === "午後")) {
-      pattern.push(feb1pm);
+
+    // v1.1: 午前校の終了時刻チェック
+    let canAddPM = true;
+    if (actualFeb1am) {
+      const amEndTime = getExamEndTime(actualFeb1am);
+      if (amEndTime >= 14 * 60) {
+        // 14:00以降に終了する場合、午後受験は物理的に不可能
+        canAddPM = false;
+        warnings.push(`${actualFeb1am.school_name}は終了時刻が遅いため、2/1の午後入試は組み込んでいません。`);
+      }
+    }
+
+    if (canAddPM) {
+      const avoid = avoidSchoolIds || [];
+      const feb1pm = selectFeb1PM(allExams, userInput, actualFeb1am, avoid);
+      if (feb1pm && !pattern.some(p => p.school_id === feb1pm.school_id && p.exam_date === "2/1" && p.am_pm === "午後")) {
+        // v1.1: 移動の余裕が少ない場合は警告を追加
+        if (actualFeb1am) {
+          const transfer = checkTransferFeasibility(actualFeb1am, feb1pm);
+          if (transfer.warning) {
+            warnings.push(transfer.warning);
+          }
+        }
+        pattern.push(feb1pm);
+      }
     }
   }
 
@@ -3642,6 +3918,25 @@ function buildPattern(allExams, janAllExams, userInput, feb1amExam, options, var
     if (candidate) {
       pattern.push(candidate);
     }
+  }
+
+  // v1.1: 全日程の午前→午後移動チェック（警告付与）
+  let hasAmPmCombo = false;
+  for (let day = 1; day <= 6; day++) {
+    const dateStr = `2/${day}`;
+    const amExam = pattern.find(e => e.exam_date === dateStr && e.am_pm === "午前");
+    const pmExam = pattern.find(e => e.exam_date === dateStr && e.am_pm === "午後");
+    if (amExam && pmExam) {
+      hasAmPmCombo = true;
+      const transfer = checkTransferFeasibility(amExam, pmExam);
+      if (transfer.warning && !warnings.includes(transfer.warning)) {
+        warnings.push(transfer.warning);
+      }
+    }
+  }
+  // 午前→午後の併願がある場合、移動時間に関する一般的な注意書きを追加
+  if (hasAmPmCombo) {
+    warnings.push("午前入試→午後入試の移動時間は、各学校の所在地・交通手段によって異なります。実際に間に合うかどうかは、事前にご自身でご確認ください。");
   }
 
   // 連続受験チェック
@@ -4279,8 +4574,9 @@ function renderExamItem(exam, userDeviation, userAreas, testType) {
   const subjectsBadge = (exam.exam_subjects && exam.exam_subjects !== '4科')
                       ? `<span class="cal-subjects-badge">${exam.exam_subjects}</span>` : '';
   const mustBadge = exam.is_must ? `<span class="must-badge">必須</span>` : '';
-  const commuteText = exam._commute_minutes
-                      ? `<span class="commute-time${exam._commute_minutes >= 60 ? ' commute-warning' : ''}">（約${exam._commute_minutes}分）</span>` : '';
+  const commuteDisplay = exam._commute_minutes ? Math.ceil(exam._commute_minutes / 10) * 10 : null;
+  const commuteText = commuteDisplay
+                      ? `<span class="commute-time${commuteDisplay >= 60 ? ' commute-warning' : ''}">（約${commuteDisplay}分）</span>` : '';
 
   let locationParts = [];
   if (exam.address) locationParts.push(exam.address);
@@ -4306,20 +4602,62 @@ function renderExamItem(exam, userDeviation, userAreas, testType) {
       : '';
   }
 
+  // v1.1: 終了時刻の注釈（午前校で終了が遅い場合に表示）
+  let endTimeNote = '';
+  if (exam.am_pm === '午前' && !isJanExam) {
+    const endMin = getExamEndTime(exam);
+    if (endMin > 12 * 60 + 30) {
+      const h = Math.floor(endMin / 60);
+      const m = endMin % 60;
+      endTimeNote = `<span class="cal-endtime-note">終了 ${h}:${String(m).padStart(2,'0')}頃</span>`;
+    }
+  }
+
+  // Googleマップ URL を生成（最寄り駅あり→経路表示、なし→所在地表示）
+  const homeStationName = document.getElementById('homeStation') ? document.getElementById('homeStation').value.trim() : '';
+  const destStr = exam.address
+    ? exam.school_name + ' ' + exam.address
+    : exam.school_name;
+  let mapUrl = '';
+  let mapLabel = '';
+  if (homeStationName && exam.school_name) {
+    // 最寄り駅入力あり → 経路表示
+    const origin = encodeURIComponent(homeStationName + '駅');
+    const destination = encodeURIComponent(destStr);
+    mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
+    mapLabel = '🗺 経路表示';
+  } else if (exam.school_name) {
+    // 最寄り駅なし → 所在地表示
+    mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destStr)}`;
+    mapLabel = '📍 所在地表示';
+  }
+
+  // 学校情報ボタンのラベル（四谷大塚・首都圏模試は偏差値表示あり）
+  const infoLabel = (testType === "nichinoken") ? '📋 学校情報' : '📋 学校情報（偏差値）';
+
+  // ボタンエリアを生成
+  let buttonsHtml = '';
+  if (detailUrl || mapUrl) {
+    buttonsHtml = '<div class="cal-buttons">';
+    if (detailUrl) {
+      buttonsHtml += `<a href="${detailUrl}" target="_blank" rel="noopener noreferrer" class="cal-btn cal-btn-info" onclick="event.stopPropagation()">${infoLabel}</a>`;
+    }
+    if (mapUrl) {
+      buttonsHtml += `<a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="cal-btn cal-btn-route" onclick="event.stopPropagation()">${mapLabel}</a>`;
+    }
+    buttonsHtml += '</div>';
+  }
+
   const inner = `
       <div class="cal-time">${amPmLabel}</div>
       <div class="cal-info">
-        <div class="cal-school">${exam.school_name}${subjectsBadge}${mustBadge}${areaLabel}</div>
+        <div class="cal-school">${exam.school_name}${subjectsBadge}${mustBadge}${areaLabel}${endTimeNote}</div>
         ${locationStr ? `<div class="cal-location">${locationStr}${commuteText}</div>` : ''}
         ${examNameSuffix ? `<div class="cal-exam-name">${examNameSuffix}</div>` : ''}
+        ${buttonsHtml}
       </div>
       <span class="cal-badge">${exam.category}</span>`;
 
-  if (detailUrl) {
-    return `<div class="${catClass}">
-      <a href="${detailUrl}" target="_blank" rel="noopener noreferrer" class="cal-exam cal-exam-link">${inner}</a>
-    </div>`;
-  }
   return `<div class="${catClass}"><div class="cal-exam">${inner}</div></div>`;
 }
 
