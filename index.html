@@ -3683,10 +3683,14 @@ function generatePatterns(userInput, schoolsData) {
   ];
 
   const allPatterns = [];
-  // 全戦略タイプを通じたフィンガープリント管理（重複パターンを排除）
-  const globalFingerprints = new Set();
 
   for (const st of strategyTypes) {
+    // 戦略タイプごとにフィンガープリントを管理（タイプ内の重複のみ排除）
+    // ※ 以前は全戦略タイプ共通のglobalFingerprintsで管理していたが、
+    //   候補校が少ない条件では攻め・堅実がバランス型と同じFPになり
+    //   パターンが1タイプしか出ないバグがあったため、タイプ別に分離
+    const localFingerprints = new Set();
+
     // 2/1AMの候補を最大3校取得
     const feb1Candidates = selectFeb1AMCandidates(allExams, userInput, st.feb1Category, 3);
 
@@ -3703,8 +3707,8 @@ function generatePatterns(userInput, schoolsData) {
       if (p.exams.length >= 3) {
         const febExams = p.exams.filter(e => e.exam_date.startsWith("2/"));
         const fp = febExams.map(e => e.school_id + "@" + e.exam_date + "_" + e.am_pm).sort().join(",");
-        if (!globalFingerprints.has(fp)) {
-          globalFingerprints.add(fp);
+        if (!localFingerprints.has(fp)) {
+          localFingerprints.add(fp);
           allPatterns.push(p);
         }
       }
@@ -3732,11 +3736,11 @@ function generatePatterns(userInput, schoolsData) {
           }, v, mustSchoolExams, avoidIds, allExamsWide, allExamsUltraWide);
           if (p.exams.length >= 3) {
             // 重複チェック: 2月の全入試（学校+日程+午前午後）をフィンガープリントとして比較
-            // 戦略タイプ間でも重複を排除する
+            // 同一戦略タイプ内での重複のみ排除する
             const febExams = p.exams.filter(e => e.exam_date.startsWith("2/"));
             const fp = febExams.map(e => e.school_id + "@" + e.exam_date + "_" + e.am_pm).sort().join(",");
-            if (!globalFingerprints.has(fp)) {
-              globalFingerprints.add(fp);
+            if (!localFingerprints.has(fp)) {
+              localFingerprints.add(fp);
               allPatterns.push(p);
               patternCount++;
               const febSchoolIds = febExams.map(e => e.school_id);
