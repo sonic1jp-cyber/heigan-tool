@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中学受験 併願パターン提案ツール v1.3.1</title>
+<title>中学受験 併願パターン提案ツール v1.3.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -763,7 +763,7 @@ a.cal-exam-link:hover {
 <div class="header">
   <h1>併願パターン提案ツール</h1>
   <p>条件を入力すると、併願パターンを自動で提案します</p>
-  <p style="font-size:0.72rem; color:#aaa; margin-top:4px;">v1.3.1｜偏差値データ基準：2027年入試 予想偏差値（四谷大塚／ONETES 2027年4月版／日能研R4 2027年6月版。一部の地方校・公立中高一貫は2025年値）｜学校名・入試実施状況は2027年入試（令和9年度）向けに更新</p>
+  <p style="font-size:0.72rem; color:#aaa; margin-top:4px;">v1.3.2｜偏差値データ基準：2027年入試 予想偏差値（四谷大塚／ONETES 2027年4月版／日能研R4 2027年6月版。一部の地方校・公立中高一貫は2025年値）｜学校名・入試実施状況は2027年入試（令和9年度）向けに更新</p>
 </div>
 
 <div class="container">
@@ -5177,6 +5177,9 @@ function initSchoolAutocomplete(inputId, listId) {
   initSchoolAutocomplete('prefSchool5', 'prefSchool5List');
 })();
 
+// 曜日計算の基準年。毎年の更新時、ヘッダーの「◯◯年入試」表記と必ず揃えること
+const EXAM_YEAR = 2027;
+
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const parts = dateStr.split('/');
@@ -5185,8 +5188,7 @@ function formatDate(dateStr) {
   const day = parseInt(parts[1]);
   const weekdays = ['日','月','火','水','木','金','土'];
 
-  // 2025年の入試日程として曜日を計算（参考値）
-  const d = new Date(2025, month - 1, day);
+  const d = new Date(EXAM_YEAR, month - 1, day);
   const wd = weekdays[d.getDay()];
 
   return `${month}月${day}日（${wd}）`;
