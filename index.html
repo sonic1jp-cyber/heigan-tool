@@ -4824,7 +4824,7 @@ function toggleDetail(sectionId, btn) {
   const section = document.getElementById(sectionId);
   const isOpen = section.classList.toggle('open');
   // ボタンテキストの▶/▼だけ切り替え（残りの文言はそのまま）
-  const text = btn.textContent.replace(/^[▶▼]\s*/, '');
+  const text = btn.textContent.trim().replace(/^[▶▼]\s*/, '');
   btn.textContent = (isOpen ? '▼ ' : '▶ ') + text;
 }
 
