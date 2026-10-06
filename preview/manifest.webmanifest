@@ -1,0 +1,16 @@
+{
+  "name": "中学受験 併願パターン提案ツール",
+  "short_name": "併願ツール",
+  "description": "条件を入れると、1月のお試し受験から2月の本番まで併願のスケジュールを組み立てます。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6fa",
+  "theme_color": "#2c3e50",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
