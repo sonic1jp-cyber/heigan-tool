@@ -3,7 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中学受験 併願パターン提案ツール v1.3.4</title>
+<title>中学受験 併願パターン提案ツール v1.4</title>
+<!-- v1.4: ホーム画面に置けるようにする（体験版はビルド時に manifest・アイコンを差し替え） -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2c3e50">
+<link rel="apple-touch-icon" href="icons/icon-apple-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="併願ツール">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -744,6 +753,66 @@ a.cal-exam-link:hover {
 .update-info summary { cursor: pointer; opacity: 0.8; display: inline-block; }
 .update-info p { margin-top: 6px; text-align: left; font-size: 0.72rem; opacity: 0.85; }
 
+/* === v1.4: スマホアプリにするボタン・案内 === */
+.install-btn {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+  padding: 9px 18px; border-radius: 999px; border: none; cursor: pointer;
+  background: #fff; color: #2c3e50; font-family: inherit; font-size: 0.86rem; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.install-btn[hidden] { display: none; }
+.install-btn-bottom { margin: 0 auto 8px; background: #2c3e50; color: #fff; }
+.install-steps { list-style: none; margin: 10px 0 4px; padding: 0; counter-reset: st; }
+.install-steps li {
+  counter-increment: st; position: relative; padding: 10px 10px 10px 44px; margin-bottom: 8px;
+  background: #f5f8fb; border-radius: 10px; font-size: 0.88rem; line-height: 1.6;
+}
+.install-steps li::before {
+  content: counter(st); position: absolute; left: 10px; top: 10px; width: 24px; height: 24px;
+  border-radius: 50%; background: #3498db; color: #fff; font-weight: 700; font-size: 0.82rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.install-steps .ico {
+  display: inline-flex; vertical-align: middle; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border: 1px solid #d0d7de; border-radius: 6px; background: #fff; margin: 0 2px;
+}
+.install-steps .ico svg { width: 18px; height: 18px; }
+.install-note { font-size: 0.76rem; color: #636e72; margin-top: 6px; }
+.install-primary {
+  display: block; width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 10px;
+  background: #3498db; color: #fff; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  text-align: center; text-decoration: none;
+}
+
+/* === v1.4: 無料体験版 === */
+.trial-badge {
+  display: inline-block; margin-bottom: 6px; padding: 2px 12px; border-radius: 999px;
+  background: #f39c12; color: #fff; font-size: 0.78rem; font-weight: 700;
+}
+.lock-note { font-size: 0.76rem; color: #b9770e; margin-top: 4px; }
+.toggle-detail.locked { color: #95a5a6; }
+.cal-exam.locked .cal-school { color: #95a5a6; font-weight: 500; font-size: 0.85rem; }
+.lock-panel {
+  text-align: center; padding: 18px 14px; background: #fafbfc; border: 2px dashed #dfe6e9;
+  border-radius: 12px; margin-top: 12px;
+}
+.lock-panel .lock-title { font-weight: 700; color: #2c3e50; margin-bottom: 4px; }
+.lock-panel p { font-size: 0.8rem; color: #636e72; }
+.lock-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px;
+  border: 1px dashed #d0d7de; border-radius: 10px; font-size: 0.82rem; color: #7f8c8d; cursor: pointer; background: #fff;
+}
+.lock-row b { color: #2c3e50; }
+.buy-btn {
+  display: block; width: 100%; margin-top: 12px; padding: 13px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #e67e22, #f39c12); color: #fff; text-decoration: none; text-align: center;
+  font-family: inherit; font-size: 0.98rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(230,126,34,0.3);
+}
+.trial-cta { margin-top: 16px; padding: 16px 14px; border-radius: 14px; background: #fffaf2; border: 1px solid #f8d9a8; }
+.trial-cta .cta-title { font-weight: 700; color: #a04000; font-size: 0.92rem; margin-bottom: 6px; }
+.trial-cta ul { margin: 0 0 0 1.2em; font-size: 0.82rem; color: #444; line-height: 1.8; }
+.trial-cta .tell-btn { width: 100%; margin-top: 8px; }
+
 /* === v1.3.4: 入力の記憶・リセット === */
 .form-memo {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
@@ -963,11 +1032,13 @@ a.act-btn { display: inline-flex; align-items: center; justify-content: center; 
 <div id="appMain" style="display:none;">
 
 <div class="header">
+  <div class="trial-badge" id="trialBadge" hidden>無料体験版</div>
   <h1>併願パターン提案ツール</h1>
-  <p>条件を入力すると、併願パターンを自動で提案します</p>
+  <p id="headerLead">条件を入力すると、併願パターンを自動で提案します</p>
+  <button type="button" class="install-btn" id="installBtnTop" hidden onclick="installApp()">📱 スマホアプリにする</button>
   <details class="update-info">
-    <summary>v1.3.4｜データと更新情報</summary>
-    <p>偏差値データ基準：2027年入試 予想偏差値（四谷大塚／ONETES 2027年4月版／日能研R4 2027年6月版。一部の地方校・公立中高一貫は2025年値）｜学校名・入試実施状況は2027年入試（令和9年度）向けに更新｜2026-09-17 データ点検実施（首都圏模試の誤値5件を削除・同名校の取り違え2件を修正・男女区分の誤り2件を修正。日能研の詳細リンクは学校検索ページへ）｜v1.3.4：入力条件の記憶・結果の手直し・共有リンク／印刷／カレンダー登録・合否で分かれるプランを追加</p>
+    <summary>v1.4｜データと更新情報</summary>
+    <p>偏差値データ基準：2027年入試 予想偏差値（四谷大塚／ONETES 2027年4月版／日能研R4 2027年6月版。一部の地方校・公立中高一貫は2025年値）｜学校名・入試実施状況は2027年入試（令和9年度）向けに更新｜2026-09-17 データ点検実施（首都圏模試の誤値5件を削除・同名校の取り違え2件を修正・男女区分の誤り2件を修正。日能研の詳細リンクは学校検索ページへ）｜v1.3.4：入力条件の記憶・結果の手直し・共有リンク／印刷／カレンダー登録・合否で分かれるプランを追加｜v1.4：スマホのホーム画面に置けるようにした（「スマホアプリにする」ボタン）</p>
   </details>
 </div>
 
@@ -1163,6 +1234,7 @@ a.act-btn { display: inline-flex; align-items: center; justify-content: center; 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <div class="footer">
+  <button type="button" class="install-btn install-btn-bottom" id="installBtnBottom" hidden onclick="installApp()">📱 スマホアプリにする</button>
   <p>本ツールの提案は参考情報です。実際の出願は各学校の募集要項をご確認ください。</p>
 </div>
 
@@ -4727,6 +4799,14 @@ function insertPreferredSchools(allExams, preferredSchools, currentPattern, stra
 // ※ パスワードを変更する場合はここの値を書き換えてください
 var AUTH_PASSWORD = 'heigan2025';
 
+// === v1.4: 無料体験版の切り替え ===
+// 体験版（try/index.html）は _build/build_trial.py がこの行を true に書き換えて作る。直接編集しない。
+var TRIAL = false;
+// 体験版の「完全版を見る」ボタンの行き先（note販売記事）
+var BUY_URL = 'https://note.com/sonic1jp/n/n7ff4f6751515';
+// 体験版で校名まで見せる最終日（これより後の2月校は鍵付き）
+var TRIAL_LAST_VISIBLE = '2/3';
+
 function checkAuth() {
   var input = document.getElementById('authPassword').value;
   if (input === AUTH_PASSWORD) {
@@ -4746,6 +4826,7 @@ function checkAuth() {
 var IS_AUTHED = false;
 try { if (sessionStorage.getItem('heigan_auth') === '1') IS_AUTHED = true; } catch(e) {}
 try { if (localStorage.getItem('heigan_auth_v') === AUTH_PASSWORD) IS_AUTHED = true; } catch(e) {}
+if (TRIAL) IS_AUTHED = true; // 体験版はパスワードなし
 if (IS_AUTHED) {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appMain').style.display = 'block';
@@ -4905,6 +4986,18 @@ function readUserInput() {
         must: mustCheck.checked
       });
     }
+  }
+
+  // v1.4: 体験版では完全版限定の入力（教科別偏差値・志望校・通学時間の絞り込み）を使わない
+  if (TRIAL) {
+    preferredSchools.length = 0;
+    return {
+      gender: gender, testType: testType, deviation: deviation,
+      deviationJP: null, deviationMath: null, deviationScience: null, deviationSocial: null,
+      areas: areas, schoolType: schoolType, affiliated: affiliated, firstChoice: null,
+      janAllArea: janAllArea, preferredSchools: preferredSchools, homeStation: homeStation,
+      commuteLimit: 0, commuteFilterActive: false
+    };
   }
 
   // firstChoice は第1志望のschool_id（後方互換）
@@ -5082,6 +5175,18 @@ function renderResults(patterns, userInput, edits, focusName) {
       <span class="strategy-toggle${isOpen ? ' open' : ''}" id="toggle-${sectionId}">▼</span>
     </div>`;
     html += `<div class="strategy-body${isOpen ? ' open' : ''}" id="body-${sectionId}">`;
+
+    // v1.4: 体験版はバランス型のメインだけ。攻め・堅実は内訳（校数）だけ見せて鍵をかける
+    if (TRIAL) {
+      html += baseName === 'バランス型の併願' ? renderPatternBox(pats[0].pid) : renderLockedPatternHTML(pats[0].pid, baseName);
+      if (pats.length > 1) {
+        html += `<div class="lock-row" onclick="openUpsell('別の組み合わせ（${pats.length - 1}件）')">🔒 <span>さらにパターンを表示（${pats.length - 1}件）は<b>完全版</b>で</span></div>`;
+      }
+      html += `</div></div>`;
+      sectionIndex++;
+      continue;
+    }
+
     html += renderPatternBox(pats[0].pid);
 
     if (pats.length > 1) {
@@ -5104,8 +5209,8 @@ function renderResults(patterns, userInput, edits, focusName) {
   sectionsEl.innerHTML += html;
   document.getElementById('printTitle').textContent = `併願パターン（${todayStr()} 作成）`;
 
-  // 保存ボタンを表示（結果がないときは出さない）
-  document.getElementById('saveArea').style.display = sectionIndex > 0 ? 'block' : 'none';
+  // 保存ボタンを表示（結果がないときは出さない。体験版は出さない）
+  document.getElementById('saveArea').style.display = (sectionIndex > 0 && !TRIAL) ? 'block' : 'none';
 
   // PC版: 日程の高さを揃える
   if (isPC) {
@@ -5168,11 +5273,31 @@ function renderPatternBox(pid) {
       html += `<span class="jan-toggle-icon">${open ? '▼' : '▶'}</span> 1月校を表示（${janItems.length}校）</button>`;
       html += `<div class="jan-collapse-body" id="jan-${pid}" style="display:${open ? 'block' : 'none'};">`;
     }
-    html += renderCalendarHTML(janItems, 'calendar', pid);
+    html += renderCalendarHTML(janItems, 'calendar', TRIAL ? null : pid);
     if (collapseJan) html += '</div></div>';
   }
 
   // === 2月校セクション ===
+  if (TRIAL) {
+    // v1.4 体験版：TRIAL_LAST_VISIBLE までは校名まで表示、それより後は種類（チャレンジ等）だけ。手直し・合否分岐・保存は完全版
+    const lastNum = dateToNum(TRIAL_LAST_VISIBLE);
+    const shown = febItems.filter(x => dateToNum(x.e.exam_date) <= lastNum);
+    const hidden = febItems.filter(x => dateToNum(x.e.exam_date) > lastNum);
+    html += renderCalendarHTML(shown, 'calendar calendar-feb', null);
+    if (hidden.length > 0) html += renderLockedCalendarHTML(hidden);
+    if (P.warnings && P.warnings.length > 0) {
+      html += '<div class="warnings">';
+      P.warnings.forEach(w => { html += `<p>⚠ ${w.replace(/^※\s*/, '')}</p>`; });
+      html += '</div>';
+    }
+    html += `<div class="lock-row" onclick="openUpsell('学校の入れ替え・追加')">🔒 <span>学校の入れ替え・外す・追加は<b>完全版</b>で</span></div>`;
+    if (febItems.length > 0) {
+      html += `<div class="lock-row" onclick="openUpsell('合否で分かれるプラン')">🔒 <span><b>合否で分かれるプラン</b>（2/2までの結果で2/3以降の受け方を切り替える）は完全版で</span></div>`;
+    }
+    html += renderTrialCtaHTML();
+    html += '</div>';
+    return html;
+  }
   html += renderCalendarHTML(febItems, 'calendar calendar-feb', pid);
   if (P.edited) {
     html += `<div class="edited-bar ctl edited-bar-below"><span>✎ 手直しした併願です</span><button type="button" class="link-btn" onclick="resetPattern('${pid}')">元の提案に戻す</button></div>`;
@@ -6108,7 +6233,9 @@ function showToast(msg) {
 }
 
 // === v1.3.4: 入力条件の記憶 ===
-const FORM_KEY = 'heigan_form_v1';
+// v1.4: 体験版は別の保存場所（同じドメインなので、完全版の入力を上書きしないため）
+const FORM_KEY = TRIAL ? 'heigan_form_try_v1' : 'heigan_form_v1';
+const FORM_KEY_TRIAL = 'heigan_form_try_v1';
 
 function collectFormState() {
   const q = s => document.querySelector(s);
@@ -6170,7 +6297,8 @@ function applyFormState(s) {
       if (p[0]) anyPref = true;
     }
   }
-  // 入力のある任意項目は開いておく
+  // 入力のある任意項目は開いておく（体験版では鍵付きなので開かない）
+  if (TRIAL) return;
   [['subjectDevSection', anySubj], ['prefSchoolSection', anyPref]].forEach(([id, open]) => {
     const sec = document.getElementById(id);
     if (open && !sec.classList.contains('open')) {
@@ -6685,10 +6813,257 @@ function saveSnapshot() {
   URL.revokeObjectURL(url);
 }
 
+// === v1.4: 無料体験版 ===
+const BUY_PRICE_LABEL = '1,000円';
+
+/** 体験版で鍵をかける最初の日（例：'2/3' → '2/4'） */
+function trialFirstLockedLabel() {
+  const p = TRIAL_LAST_VISIBLE.split('/');
+  return p[0] + '/' + (parseInt(p[1]) + 1);
+}
+
+/** 体験版の画面に切り替える（鍵マーク・バッジ・文言） */
+function applyTrialMode() {
+  if (!TRIAL) return;
+  document.title = '中学受験 併願パターン提案ツール（無料体験版）';
+  document.getElementById('trialBadge').hidden = false;
+  document.getElementById('headerLead').textContent = '条件を入れると、併願パターンの一部を無料でお試しできます';
+  const lockToggle = (sectionId, label, feature) => {
+    const btn = document.querySelector(`button[onclick*="${sectionId}"]`);
+    if (!btn) return;
+    btn.textContent = '🔒 ' + label + '（完全版）';
+    btn.classList.add('locked');
+    btn.onclick = () => openUpsell(feature);
+    document.getElementById(sectionId).classList.remove('open');
+  };
+  lockToggle('subjectDevSection', '教科別偏差値を入力', '教科別偏差値（2科・1科入試の判定）');
+  lockToggle('prefSchoolSection', '志望校を指定', '志望校の指定（必ず受験する）');
+  const cl = document.getElementById('commuteLimit');
+  cl.value = '0';
+  cl.disabled = true;
+  const help = document.getElementById('commuteLimitHelp');
+  help.innerHTML = '🔒 通学時間での絞り込みは<b>完全版</b>で使えます（所要時間の目安の表示は体験版でも出ます）。';
+  help.classList.add('lock-note');
+}
+
+function trialFeatureListHTML() {
+  return `<ul>
+    <li>「攻め」「堅実」を含む3タイプの併願と、別の組み合わせ</li>
+    <li>${trialFirstLockedLabel()}以降の学校まで、全日程の校名</li>
+    <li>合否で分かれるプラン（2/2までの結果で受け方を切り替え）</li>
+    <li>学校の入れ替え・外す・学校名で探して追加</li>
+    <li>教科別偏差値・志望校の指定・通学時間での絞り込み</li>
+    <li>家族にリンクで送る・印刷・PDF保存・カレンダー登録</li>
+  </ul>`;
+}
+
+function buyButtonHTML() {
+  return `<a class="buy-btn" href="${BUY_URL}" target="_blank" rel="noopener">完全版を見る（${BUY_PRICE_LABEL}）</a>`;
+}
+
+/** 鍵付きの日程（校名は出さず、日付・午前午後・種類だけ） */
+function renderLockedCalendarHTML(items) {
+  let html = '<div class="calendar calendar-feb calendar-locked">';
+  let currentDate = '';
+  for (const x of items) {
+    const e = x.e;
+    if (e.exam_date !== currentDate) {
+      if (currentDate !== '') html += '</div>';
+      html += `<div class="cal-date-group" data-date="${e.exam_date}"><div class="cal-date-header">${formatDate(e.exam_date)}</div>`;
+      currentDate = e.exam_date;
+    }
+    const catClass = e.category === 'チャレンジ' ? 'cat-challenge' : e.category === '相応' ? 'cat-match' : 'cat-safe';
+    const ap = e.am_pm === '午前' || e.am_pm === '午後' ? e.am_pm : '';
+    html += `<div class="${catClass}" onclick="openUpsell('${trialFirstLockedLabel()}以降の学校')" style="cursor:pointer;"><div class="cal-exam locked">
+      <div class="cal-time">${ap}</div>
+      <div class="cal-info"><div class="cal-school">🔒 ${e.category}校（校名は完全版で表示）</div></div>
+      <span class="cal-badge">${e.category}</span></div></div>`;
+  }
+  if (currentDate !== '') html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+/** 体験版で鍵をかけたパターン（攻め・堅実）：校数の内訳だけ見せる */
+function renderLockedPatternHTML(pid, baseName) {
+  const P = APP.patterns[pid];
+  const counts = { チャレンジ: 0, 相応: 0, 安全: 0 };
+  P.exams.forEach(e => { if (e.exam_date.startsWith('2/') && counts[e.category] !== undefined) counts[e.category]++; });
+  let html = `<div class="pattern-box" id="pbox-${pid}"><div class="pattern-summary">`;
+  if (counts.チャレンジ > 0) html += `<span class="summary-chip challenge">チャレンジ ${counts.チャレンジ}校</span>`;
+  if (counts.相応 > 0) html += `<span class="summary-chip match">相応 ${counts.相応}校</span>`;
+  if (counts.安全 > 0) html += `<span class="summary-chip safe">安全 ${counts.安全}校</span>`;
+  html += `</div><div class="lock-panel">
+    <div class="lock-title">🔒 ${baseName}は完全版で表示</div>
+    <p>お子さまの条件で、この組み合わせはもうできています。<br>校名と日程は完全版で見られます。</p>
+    ${buyButtonHTML()}
+  </div></div>`;
+  return html;
+}
+
+/** 体験版のパターン下：完全版の案内＋人に教える */
+function renderTrialCtaHTML() {
+  return `<div class="trial-cta">
+    <div class="cta-title">完全版（${BUY_PRICE_LABEL}）でできること</div>
+    ${trialFeatureListHTML()}
+    ${buyButtonHTML()}
+    <button type="button" class="act-btn tell-btn" onclick="tellFriends()">📨 この無料ツールを人に教える</button>
+  </div>`;
+}
+
+function openUpsell(feature) {
+  openSheet('完全版の機能です', `<p class="sheet-lead">「${feature}」は完全版（${BUY_PRICE_LABEL}）で使えます。</p>
+    <div class="trial-cta" style="margin-top:10px;"><div class="cta-title">完全版でできること</div>${trialFeatureListHTML()}</div>
+    ${buyButtonHTML()}`);
+}
+
+/** 体験版のURLを人に送る（スマホは共有メニュー、PCはLINE・コピー） */
+async function tellFriends() {
+  const url = location.origin + location.pathname;
+  const text = 'お子さまの条件を入れると、中学受験の併願パターンを組み立ててくれる無料ツールです';
+  if (navigator.share) {
+    try { await navigator.share({ title: '併願パターン提案ツール（無料体験版）', text: text, url: url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  openSheet('この無料ツールを人に教える', `<p class="share-url">${url}</p>
+    <div class="share-grid">
+      <a class="act-btn" href="https://line.me/R/share?text=${encodeURIComponent(text + '\n' + url)}" target="_blank" rel="noopener">LINEで送る</a>
+      <button type="button" class="act-btn" onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('リンクをコピーしました'))">リンクをコピー</button>
+    </div>`);
+}
+
+// === v1.4: スマホアプリにする（ホーム画面に追加） ===
+let deferredInstall = null;
+
+function isStandalone() {
+  try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (e) { return false; }
+}
+
+function detectDevice() {
+  const ua = navigator.userAgent || '';
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const android = /Android/.test(ua);
+  let inApp = null;
+  if (/\bLine\//i.test(ua)) inApp = 'LINE';
+  else if (/Instagram/i.test(ua)) inApp = 'Instagram';
+  else if (/FBAN|FBAV|FB_IAB/i.test(ua)) inApp = 'Facebook';
+  else if (/Twitter/i.test(ua)) inApp = 'X';
+  return {
+    ios: ios, android: android, inApp: inApp,
+    iosChrome: ios && /CriOS/.test(ua),
+    iosOther: ios && /FxiOS|EdgiOS/.test(ua),
+    mobile: ios || android || /Mobile/.test(ua),
+  };
+}
+
+function refreshInstallButtons() {
+  const show = !isStandalone() && (detectDevice().mobile || !!deferredInstall);
+  ['installBtnTop', 'installBtnBottom'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.hidden = !show;
+  });
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  refreshInstallButtons();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstall = null;
+  if (!document.getElementById('sheetOverlay').hidden) closeSheet();
+  showToast('ホーム画面に追加しました');
+  refreshInstallButtons();
+});
+
+/** 「スマホアプリにする」ボタン：Android等はその場で追加の確認を出し、iPhone等は手順を案内する */
+async function installApp() {
+  if (deferredInstall && !detectDevice().inApp) {
+    const ev = deferredInstall;
+    deferredInstall = null;
+    ev.prompt();
+    try {
+      const r = await ev.userChoice;
+      if (r && r.outcome === 'accepted') showToast('ホーム画面に追加しました');
+    } catch (e) {}
+    refreshInstallButtons();
+    return;
+  }
+  openInstallGuide();
+}
+
+const ICO_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="#007aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11v9h12v-9"/></svg>';
+const ICO_ADD = '<svg viewBox="0 0 24 24" fill="none" stroke="#2d3436" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>';
+const ICO_DOTS_V = '<svg viewBox="0 0 24 24" fill="#2d3436"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+const ICO_DOTS_H = '<svg viewBox="0 0 24 24" fill="#2d3436"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+const ico = svg => `<span class="ico">${svg}</span>`;
+
+function externalBrowserUrl() {
+  const u = new URL(location.href);
+  u.searchParams.set('openExternalBrowser', '1'); // LINEの中で開いたページを、普段のブラウザで開き直す
+  return u.toString();
+}
+
+function openInstallGuide() {
+  const d = detectDevice();
+  const done = '<p class="install-note">ホーム画面のアイコンから開くと、アプリのように全画面で使えます。</p>';
+  const pwNote = (!TRIAL && d.ios) ? '<p class="install-note">※ iPhoneの仕組みで、ホーム画面から<b>初めて開いたときだけ</b>パスワードをもう一度入れてください。</p>' : '';
+  let html = '';
+  let title = 'ホーム画面に追加する';
+  if (d.inApp === 'LINE') {
+    title = 'まずブラウザで開き直します';
+    html = `<p class="sheet-lead">LINEの中で開いているため、このままではホーム画面に追加できません。下のボタンを押すと、${d.ios ? 'Safari' : 'Chrome'}で開き直します。</p>
+      <a class="install-primary" href="${externalBrowserUrl()}">${d.ios ? 'Safari' : 'ブラウザ'}で開き直す</a>
+      <p class="install-note">開き直したページで、もう一度「📱 スマホアプリにする」を押してください。</p>`;
+  } else if (d.inApp) {
+    title = 'まずブラウザで開き直します';
+    html = `<p class="sheet-lead">${d.inApp}の中で開いているため、このままではホーム画面に追加できません。</p>
+      <ol class="install-steps">
+        <li>画面の右上か右下にある ${ico(d.ios ? ICO_DOTS_H : ICO_DOTS_V)} を押します</li>
+        <li>「ブラウザで開く」（${d.ios ? '「Safariで開く」' : '「Chromeで開く」'}）を選びます</li>
+        <li>開き直したページで、もう一度「📱 スマホアプリにする」を押します</li>
+      </ol>
+      <button type="button" class="act-btn act-wide" onclick="navigator.clipboard.writeText(location.origin + location.pathname).then(()=>showToast('リンクをコピーしました。${d.ios ? 'Safari' : 'Chrome'}に貼り付けてください'))">うまくいかないとき：リンクをコピー</button>`;
+  } else if (d.ios && !d.iosChrome && !d.iosOther) {
+    html = `<p class="sheet-lead">iPhoneは、次の3ステップで追加できます（10秒ほどです）。</p>
+      <ol class="install-steps">
+        <li>画面の下（または上）にある ${ico(ICO_SHARE)}「共有」を押します<br><span class="install-note">見当たらないときは ${ico(ICO_DOTS_H)} を押すと出てきます</span></li>
+        <li>メニューを上にずらして ${ico(ICO_ADD)}「ホーム画面に追加」を押します</li>
+        <li>右上の「追加」を押すと、ホーム画面にアイコンができます</li>
+      </ol>${pwNote}${done}`;
+  } else if (d.ios) {
+    html = `<p class="sheet-lead">次の3ステップで追加できます。</p>
+      <ol class="install-steps">
+        <li>アドレスバーの右にある ${ico(ICO_SHARE)}「共有」を押します</li>
+        <li>${ico(ICO_ADD)}「ホーム画面に追加」を押します</li>
+        <li>「追加」を押すと、ホーム画面にアイコンができます</li>
+      </ol>
+      <p class="install-note">うまくいかないときは、Safariでこのページを開いてからお試しください。</p>${pwNote}${done}`;
+  } else if (d.android) {
+    html = `<p class="sheet-lead">次の3ステップで追加できます。</p>
+      <ol class="install-steps">
+        <li>画面右上の ${ico(ICO_DOTS_V)} を押します</li>
+        <li>「ホーム画面に追加」または「アプリをインストール」を押します</li>
+        <li>「追加」（「インストール」）を押すと、ホーム画面にアイコンができます</li>
+      </ol>${done}`;
+  } else {
+    html = `<p class="sheet-lead">スマホでこのページを開き、「📱 スマホアプリにする」を押すとホーム画面に置けます。</p>
+      <p class="install-note">パソコンのChrome・Edgeでは、アドレスバー右端の「インストール」のマークからも追加できます。</p>`;
+  }
+  openSheet(title, html);
+}
+
+// オフラインでも開けるようにする（https か localhost のときだけ）
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+refreshInstallButtons();
+
 // === v1.3.4: 起動時の処理（共有リンクの読み込み・前回の入力の復元） ===
 (function initV134() {
+  applyTrialMode();
   let share = null;
-  const m = location.hash.match(/^#s=([A-Za-z0-9_-]+)/);
+  // 体験版では完全版の共有リンク（#s=…）を開かない
+  const m = TRIAL ? null : location.hash.match(/^#s=([A-Za-z0-9_-]+)/);
   if (m) {
     try { share = JSON.parse(b64urlDecode(m[1])); } catch (e) { share = null; }
   }
@@ -6703,7 +7078,9 @@ function saveSnapshot() {
   }
   if (!share || !share.i) {
     try {
-      const saved = JSON.parse(localStorage.getItem(FORM_KEY) || 'null');
+      // v1.4: 完全版で初めて開いたときは、体験版で入れた条件を引き継ぐ
+      let saved = JSON.parse(localStorage.getItem(FORM_KEY) || 'null');
+      if (!saved && !TRIAL) saved = JSON.parse(localStorage.getItem(FORM_KEY_TRIAL) || 'null');
       if (saved) applyFormState(saved);
     } catch (e) {}
   }
