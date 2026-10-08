@@ -1032,7 +1032,7 @@ a.act-btn { display: inline-flex; align-items: center; justify-content: center; 
 <div id="appMain" style="display:none;">
 
 <div class="header">
-  <div class="trial-badge" id="trialBadge" hidden>無料体験版</div>
+  <div class="trial-badge" id="trialBadge" hidden>無料で使えます</div>
   <h1>併願パターン提案ツール</h1>
   <p id="headerLead">条件を入力すると、併願パターンを自動で提案します</p>
   <button type="button" class="install-btn" id="installBtnTop" hidden onclick="installApp()">📱 スマホアプリにする</button>
@@ -6825,9 +6825,9 @@ function trialFirstLockedLabel() {
 /** 体験版の画面に切り替える（鍵マーク・バッジ・文言） */
 function applyTrialMode() {
   if (!TRIAL) return;
-  document.title = '中学受験 併願パターン提案ツール（無料体験版）';
+  document.title = '中学受験 併願パターン提案ツール（無料で使えます）';
   document.getElementById('trialBadge').hidden = false;
-  document.getElementById('headerLead').textContent = '条件を入れると、併願パターンの一部を無料でお試しできます';
+  document.getElementById('headerLead').textContent = '条件を入れるだけで、併願パターンを無料で作れます';
   const lockToggle = (sectionId, label, feature) => {
     const btn = document.querySelector(`button[onclick*="${sectionId}"]`);
     if (!btn) return;
@@ -6842,7 +6842,7 @@ function applyTrialMode() {
   cl.value = '0';
   cl.disabled = true;
   const help = document.getElementById('commuteLimitHelp');
-  help.innerHTML = '🔒 通学時間での絞り込みは<b>完全版</b>で使えます（所要時間の目安の表示は体験版でも出ます）。';
+  help.innerHTML = '🔒 通学時間での絞り込みは<b>完全版</b>で使えます（所要時間の目安は無料でも表示します）。';
   help.classList.add('lock-note');
 }
 
@@ -6922,7 +6922,7 @@ async function tellFriends() {
   const url = location.origin + location.pathname;
   const text = 'お子さまの条件を入れると、中学受験の併願パターンを組み立ててくれる無料ツールです';
   if (navigator.share) {
-    try { await navigator.share({ title: '併願パターン提案ツール（無料体験版）', text: text, url: url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.share({ title: '併願パターン提案ツール（無料で使えます）', text: text, url: url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
   }
   openSheet('この無料ツールを人に教える', `<p class="share-url">${url}</p>
     <div class="share-grid">
