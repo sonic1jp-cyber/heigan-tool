@@ -812,6 +812,7 @@ a.cal-exam-link:hover {
 .trial-cta .cta-title { font-weight: 700; color: #a04000; font-size: 0.92rem; margin-bottom: 6px; }
 .trial-cta ul { margin: 0 0 0 1.2em; font-size: 0.82rem; color: #444; line-height: 1.8; }
 .trial-cta .tell-btn { width: 100%; margin-top: 8px; }
+.trial-cta .cta-note { margin: 8px 0 0; font-size: 0.8rem; color: #a04000; font-weight: 700; }
 
 /* === v1.3.4: 入力の記憶・リセット === */
 .form-memo {
@@ -4804,7 +4805,7 @@ var AUTH_PASSWORD = 'heigan2025';
 var TRIAL = true;
 // 体験版の「完全版を見る」ボタンの行き先（note販売記事）
 var BUY_URL = 'https://note.com/sonic1jp/n/n7ff4f6751515';
-// 体験版で校名まで見せる最終日（これより後の2月校は鍵付き）
+// 体験版で校名まで見せる最終日（これより後の2月校は鍵付き。1月校も鍵付き）
 var TRIAL_LAST_VISIBLE = '2/3';
 
 function checkAuth() {
@@ -5273,7 +5274,8 @@ function renderPatternBox(pid) {
       html += `<span class="jan-toggle-icon">${open ? '▼' : '▶'}</span> 1月校を表示（${janItems.length}校）</button>`;
       html += `<div class="jan-collapse-body" id="jan-${pid}" style="display:${open ? 'block' : 'none'};">`;
     }
-    html += renderCalendarHTML(janItems, 'calendar', TRIAL ? null : pid);
+    // 無料ページは1月校の校名も鍵（2026-10-09 役員指定：校名は2/1〜TRIAL_LAST_VISIBLEだけ）
+    html += TRIAL ? renderLockedCalendarHTML(janItems, 'calendar', '1月校の校名') : renderCalendarHTML(janItems, 'calendar', pid);
     if (collapseJan) html += '</div></div>';
   }
 
@@ -5284,7 +5286,7 @@ function renderPatternBox(pid) {
     const shown = febItems.filter(x => dateToNum(x.e.exam_date) <= lastNum);
     const hidden = febItems.filter(x => dateToNum(x.e.exam_date) > lastNum);
     html += renderCalendarHTML(shown, 'calendar calendar-feb', null);
-    if (hidden.length > 0) html += renderLockedCalendarHTML(hidden);
+    if (hidden.length > 0) html += renderLockedCalendarHTML(hidden, 'calendar calendar-feb', trialFirstLockedLabel() + '以降の学校');
     if (P.warnings && P.warnings.length > 0) {
       html += '<div class="warnings">';
       P.warnings.forEach(w => { html += `<p>⚠ ${w.replace(/^※\s*/, '')}</p>`; });
@@ -6814,7 +6816,7 @@ function saveSnapshot() {
 }
 
 // === v1.4: 無料体験版 ===
-const BUY_PRICE_LABEL = '1,000円';
+const BUY_PRICE_LABEL = '買い切り1,000円';
 
 /** 体験版で鍵をかける最初の日（例：'2/3' → '2/4'） */
 function trialFirstLockedLabel() {
@@ -6849,7 +6851,7 @@ function applyTrialMode() {
 function trialFeatureListHTML() {
   return `<ul>
     <li>「攻め」「堅実」を含む3タイプの併願と、別の組み合わせ</li>
-    <li>${trialFirstLockedLabel()}以降の学校まで、全日程の校名</li>
+    <li>1月校と${trialFirstLockedLabel()}以降も、全日程の校名</li>
     <li>合否で分かれるプラン（2/2までの結果で受け方を切り替え）</li>
     <li>学校の入れ替え・外す・学校名で探して追加</li>
     <li>教科別偏差値・志望校の指定・通学時間での絞り込み</li>
@@ -6862,8 +6864,8 @@ function buyButtonHTML() {
 }
 
 /** 鍵付きの日程（校名は出さず、日付・午前午後・種類だけ） */
-function renderLockedCalendarHTML(items) {
-  let html = '<div class="calendar calendar-feb calendar-locked">';
+function renderLockedCalendarHTML(items, cls, feature) {
+  let html = `<div class="${cls} calendar-locked">`;
   let currentDate = '';
   for (const x of items) {
     const e = x.e;
@@ -6874,7 +6876,7 @@ function renderLockedCalendarHTML(items) {
     }
     const catClass = e.category === 'チャレンジ' ? 'cat-challenge' : e.category === '相応' ? 'cat-match' : 'cat-safe';
     const ap = e.am_pm === '午前' || e.am_pm === '午後' ? e.am_pm : '';
-    html += `<div class="${catClass}" onclick="openUpsell('${trialFirstLockedLabel()}以降の学校')" style="cursor:pointer;"><div class="cal-exam locked">
+    html += `<div class="${catClass}" onclick="openUpsell('${feature}')" style="cursor:pointer;"><div class="cal-exam locked">
       <div class="cal-time">${ap}</div>
       <div class="cal-info"><div class="cal-school">🔒 ${e.category}校（校名は完全版で表示）</div></div>
       <span class="cal-badge">${e.category}</span></div></div>`;
@@ -6906,6 +6908,7 @@ function renderTrialCtaHTML() {
   return `<div class="trial-cta">
     <div class="cta-title">完全版（${BUY_PRICE_LABEL}）でできること</div>
     ${trialFeatureListHTML()}
+    <p class="cta-note">月額・追加料金はありません。今後の更新も無料です。</p>
     ${buyButtonHTML()}
     <button type="button" class="act-btn tell-btn" onclick="tellFriends()">📨 この無料ツールを人に教える</button>
   </div>`;
@@ -6913,7 +6916,7 @@ function renderTrialCtaHTML() {
 
 function openUpsell(feature) {
   openSheet('完全版の機能です', `<p class="sheet-lead">「${feature}」は完全版（${BUY_PRICE_LABEL}）で使えます。</p>
-    <div class="trial-cta" style="margin-top:10px;"><div class="cta-title">完全版でできること</div>${trialFeatureListHTML()}</div>
+    <div class="trial-cta" style="margin-top:10px;"><div class="cta-title">完全版でできること</div>${trialFeatureListHTML()}<p class="cta-note">月額・追加料金はありません。今後の更新も無料です。</p></div>
     ${buyButtonHTML()}`);
 }
 
